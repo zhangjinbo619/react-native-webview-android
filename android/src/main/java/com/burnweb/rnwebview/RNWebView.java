@@ -216,7 +216,8 @@ class RNWebView extends WebView implements LifecycleEventListener {
 
     @Override
     public void onDetachedFromWindow() {
-        this.loadDataWithBaseURL(this.getBaseUrl(), "<html></html>", "text/html", this.getCharset(), null);
+        //屏蔽自动清除，解决和react-native-navigation push问题
+//        this.loadDataWithBaseURL(this.getBaseUrl(), "<html>112223334444</html>", "text/html", this.getCharset(), null);
         super.onDetachedFromWindow();
     }
 
