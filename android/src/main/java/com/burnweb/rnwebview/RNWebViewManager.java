@@ -174,7 +174,15 @@ public class RNWebViewManager extends SimpleViewManager<RNWebView> {
     public void setInjectedJavaScript(RNWebView view, @Nullable String injectedJavaScript) {
         view.setInjectedJavaScript(injectedJavaScript);
     }
+    @ReactProp(name = "allowInterceptUrl")
+    public void setAllowInterceptUrl(RNWebView view, boolean enabled) {
+        view.setAllowInterceptUrl(enabled);
+    }
 
+    @ReactProp(name = "injectFilterInterceptArray")
+    public void setInjectFilterInterceptArray(RNWebView view,@Nullable ReadableArray injectFilterInterceptArray){
+        view.setInjectFilterInterceptArray(injectFilterInterceptArray);
+    }
     @Override
     public @Nullable Map<String, Integer> getCommandsMap() {
         return MapBuilder.of(
@@ -230,7 +238,8 @@ public class RNWebViewManager extends SimpleViewManager<RNWebView> {
     @Override
     public Map getExportedCustomDirectEventTypeConstants() {
         return MapBuilder.of(
-                NavigationStateChangeEvent.EVENT_NAME, MapBuilder.of("registrationName", "onNavigationStateChange")
+                NavigationStateChangeEvent.EVENT_NAME, MapBuilder.of("registrationName", "onNavigationStateChange"),
+                ShouldStartLoadWithRequestEvent.EVENT_NAME,MapBuilder.of("registrationName", "onShouldStartLoadWithRequest")
         );
     }
 

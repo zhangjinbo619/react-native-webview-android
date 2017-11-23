@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.net.Uri;
 import android.graphics.Bitmap;
 import android.os.Build;
+import android.text.TextUtils;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JsResult;
 import android.webkit.ValueCallback;
@@ -13,6 +14,8 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.bridge.ReadableNativeArray;
 import com.facebook.react.common.SystemClock;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.uimanager.ThemedReactContext;
@@ -28,12 +31,42 @@ class RNWebView extends WebView implements LifecycleEventListener {
     private String baseUrl = "file:///";
     private String injectedJavaScript = null;
     private boolean allowUrlRedirect = false;
+    private boolean allowInterceptUrl;
+    private ReadableArray mInjectFilterInterceptArray;
+
 
     protected class EventWebClient extends WebViewClient {
         public boolean shouldOverrideUrlLoading(WebView view, String url){
+            //************** by zhangjinbo 用于Url拦截*******************//
+            if (RNWebView.this.getAllowInterceptUrl()) {
+                //事件拦截
+                ReadableNativeArray nativeArray = (ReadableNativeArray) RNWebView.this.getInjectFilterInterceptArray();
+                if (nativeArray != null && nativeArray.size() > 0) {
+                    if (!TextUtils.isEmpty(url)) {
+                        //是否拦截
+                        boolean isIntercet = false;
+                        String interceptValue = "";
+                        for (int i = 0; i < nativeArray.size(); i++) {
+                            String value = nativeArray.getString(i);
+                            interceptValue = value;
+                            if (!TextUtils.isEmpty(value) && url.indexOf(value) > 0) {
+                                isIntercet = true;
+                                break;
+                            }
+                        }
+                        if (isIntercet) {
+                            mEventDispatcher.dispatchEvent(new ShouldStartLoadWithRequestEvent(getId(), SystemClock.nanoTime(), view.getTitle(), false, url, view.canGoBack(), view.canGoForward(),interceptValue));
+                            return true;
+                        }
+                    }
+                }
+            }
+            //****************************************//
             if(RNWebView.this.getAllowUrlRedirect()) {
                 // do your handling codes here, which url is the requested url
                 // probably you need to open that url rather than redirect:
+                mEventDispatcher.dispatchEvent(new ShouldStartLoadWithRequestEvent(getId(), SystemClock.nanoTime(), view.getTitle(), false, url, view.canGoBack(), view.canGoForward()));
+
                 view.loadUrl(url);
 
                 return false; // then it is not handled by default action
@@ -127,7 +160,21 @@ class RNWebView extends WebView implements LifecycleEventListener {
     public void setInjectedJavaScript(String injectedJavaScript) {
         this.injectedJavaScript = injectedJavaScript;
     }
+    public ReadableArray getInjectFilterInterceptArray() {
+        return mInjectFilterInterceptArray;
+    }
 
+    public void setInjectFilterInterceptArray(ReadableArray mInjectFilterInterceptArray) {
+        this.mInjectFilterInterceptArray = mInjectFilterInterceptArray;
+    }
+
+    public void setAllowInterceptUrl(boolean a) {
+        this.allowInterceptUrl = a;
+    }
+
+    public boolean getAllowInterceptUrl() {
+        return this.allowInterceptUrl;
+    }
     public String getInjectedJavaScript() {
         return this.injectedJavaScript;
     }
