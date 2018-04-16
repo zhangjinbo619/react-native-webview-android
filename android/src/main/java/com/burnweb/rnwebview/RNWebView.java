@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.text.TextUtils;
+import android.util.Log;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JsResult;
 import android.webkit.ValueCallback;
@@ -38,8 +39,10 @@ class RNWebView extends WebView implements LifecycleEventListener {
 
     protected class EventWebClient extends WebViewClient {
         public boolean shouldOverrideUrlLoading(WebView view, String url){
+
             //************** by zhangjinbo 用于Url拦截*******************//
             if (RNWebView.this.getAllowInterceptUrl()) {
+                Log.i("aabbcc", "getAllowInterceptUrl==true");
                 //事件拦截
                 ReadableNativeArray nativeArray = (ReadableNativeArray) RNWebView.this.getInjectFilterInterceptArray();
                 if (nativeArray != null && nativeArray.size() > 0) {
@@ -50,6 +53,8 @@ class RNWebView extends WebView implements LifecycleEventListener {
                         for (int i = 0; i < nativeArray.size(); i++) {
                             String value = nativeArray.getString(i);
                             interceptValue = value;
+                            Log.i("aabbcc", "interceptValue==="+interceptValue+",url==="+url);
+
                             if (!TextUtils.isEmpty(value) && url.indexOf(value) > 0) {
                                 isIntercet = true;
                                 break;
@@ -74,6 +79,19 @@ class RNWebView extends WebView implements LifecycleEventListener {
             {
                 return true;
             }
+            //************** by zhangjinbo 判断重定向 2018年04月16日*******************//
+            WebView.HitTestResult hitTestResult = view.getHitTestResult();
+            if(hitTestResult == null) {
+                Log.i("aabbcc", "hitTestResult=="+hitTestResult);
+                return false;
+            }
+            if(hitTestResult.getType() == WebView.HitTestResult.UNKNOWN_TYPE) {
+                Log.i("aabbcc", "hitTestResult.getType()=="+hitTestResult.getType());
+
+                return false;
+            }
+            //************** by zhangjinbo 判断重定向 2018年04月16日*******************//
+
             if(RNWebView.this.getAllowUrlRedirect()) {
                 // do your handling codes here, which url is the requested url
                 // probably you need to open that url rather than redirect:
@@ -144,6 +162,7 @@ class RNWebView extends WebView implements LifecycleEventListener {
         this.getSettings().setLoadsImagesAutomatically(true);
         this.getSettings().setBlockNetworkImage(false);
         this.getSettings().setBlockNetworkLoads(false);
+        this.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             this.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
